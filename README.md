@@ -16,10 +16,10 @@ The dataset was retrieved from an open-source website, uci.edu. It consists of 3
 Data: https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success
 
 # Algorithm 
-K-Nearest Neighbor (KNN)
-Decision Tree 
-Random Forest
-Naive Bayes
-Support Vector Machine (SVM)
+1. K-Nearest Neighbor (KNN)
+2. Decision Tree 
+3. Random Forest
+4. Naive Bayes
+5. Support Vector Machine (SVM)
 
 
