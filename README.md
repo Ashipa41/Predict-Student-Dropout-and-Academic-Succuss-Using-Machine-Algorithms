@@ -22,4 +22,7 @@ Data: https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+acade
 4. Naive Bayes
 5. Support Vector Machine (SVM)
 
+# Conclusion
+
+In this project, the use of advanced machine learning techniques, including data imputation and several ML models, is used in order to identify the factors that influence student dropout rates and identify at-risk students to focus more on the aspiration to reduce the dropout rate. The five models that were developed were tuned to the maximum limit, but there is also room for more improvement. The random forest model was the best-performing algorithm with accuracy of 77% and kappa 62%, followed by SVM accuracy of 76% and kappa 59%, also producing less misclassification error. I believe there are more factors that affect the academic success rate. That is why all the factors in this data set were used.
 
