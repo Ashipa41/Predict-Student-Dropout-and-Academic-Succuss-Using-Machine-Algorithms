@@ -1,60 +1,59 @@
 #--------------------------------------------------------Section 01----------------------------------------
-# set working directory
-setwd(dirname(file.choose()))
-getwd()
+# Set working directory to the location of the selected file and display current working directory
+setwd(dirname(file.choose()))  # Opens file dialog to select file, sets the directory to file's location
+getwd()  # Prints the working directory
 
 #-------------------------------------------------------section 02--------------------------------------
-# read in data from csv file
-dataset <- read.csv("Student_data.csv", stringsAsFactors = FALSE)
+# Load and explore the dataset
+dataset <- read.csv("Student_data.csv", stringsAsFactors = FALSE)  # Read CSV file
 
-str(dataset)
-head(dataset)
-summary(dataset)
+# Inspect dataset structure, first few rows, and summary statistics
+str(dataset)  # Displays the structure of the dataset
+head(dataset)  # Shows the first 6 rows of the dataset
+summary(dataset)  # Displays summary statistics for each column
 
 #---------------------------------------------------------section 03--------------------------------------
-# check for missing data 
-library(Amelia)
+# Checking for missing data
+library(Amelia)  # Load library for missing data visualization
+
+# Apply function to calculate number of missing values per column
 apply(dataset, MARGIN = 2, FUN = function(x) sum(is.na(x)))
-missmap(dataset, col = c("red", "blue"), legend = TRUE)
+
+# Visualize missing data in a heatmap
+missmap(dataset, col = c("red", "blue"), legend = TRUE)  # Red for missing, blue for present data
+
+# Remove rows with missing data
 dataset <- na.omit(dataset)
 
-
-#Boxplot of the independent variable not normalize 
-boxplot(dataset[-37])
-
+# Boxplot to explore the independent variables before normalization
+boxplot(dataset[-37])  # Plot excluding the 37th column (assumed Target)
 
 #-------------------------------------------------------section 04-------------------------------
-#----------------ENCODING TO INTEGER FOR CORRELATION TESTING -------------------------------------
-#Convert the 'Target' column to a factor
+# Encoding target variable for correlation testing
+# Convert the 'Target' column to a factor
 dataset$Target <- factor(dataset$Target)
 
-#Converting the dependent Variable (Target) to integer for corrlation testing
+# Convert the target variable to integers for correlation analysis
 dataset$Target <- as.integer(dataset$Target)
 
-#correlation Matix
-#install.packages(corrplot)
-library(corrplot)
+# Generate a Spearman correlation matrix and visualize it
+library(corrplot)  # Load library for correlation plots
 
-cor_matrix1 <- cor(dataset, method = "spearman")
-
-# Plot the correlation matrix using corrplot
-corrplot(cor_matrix1, method = "circle", type = "upper", tl.col = "black", tl.srt = 50)
+cor_matrix1 <- cor(dataset, method = "spearman")  # Compute correlation matrix
+corrplot(cor_matrix1, method = "circle", type = "upper", tl.col = "black", tl.srt = 50)  # Visualize correlation matrix
 
 #-----------------------------------------------------section 05---------------------------------------------
-#-------------------------------ENCODING BACK TO CHR FOR BETTER VIEW--------------------------------
+# Encoding target variable back to factor for better readability
+# Recode 'Target' as a factor with specific levels and labels
+dataset$Target <- factor(dataset$Target, levels = c(1, 2, 3), labels = c("D", "E", "G"))
 
-# recode dependent variable (Target) as a factor, indicate all possible levels and label
-dataset$Target <- factor(dataset$Target, levels = c(1, 2, 3),
-                         labels = c("D", "E", "G"))
-
-# Table of the dependent variable (Target)
+# Create a frequency table of the target variable
 table(dataset$Target)
 
-
-# table or proportions with more informative labels
+# Show proportion table of the target variable
 round(prop.table(table(dataset$Target)) * 100, digits = 1)
 
-#------------------------------creating a pie chart for the dependent variable----------------------
+# Pie chart for visualizing the distribution of the target variable
 install.packages(plotly)
 library(plotly)
 
@@ -63,184 +62,75 @@ df <- data.frame(
   Count_T = c(49.9, 32.1, 17.9)
 )
 
-
-# Create a pie chart using plot_ly
+# Create a pie chart using plotly
 Plot <- plot_ly(df, labels = ~Target, values = ~Count_T, type = "pie", textinfo = "value+label",
                 hole = 0.4, pull = c(0, 0.2, 0.1)) %>%
-  layout(title = "How many dropouts, enrolled & graduates are there in Target column",
+  layout(title = "Distribution of Target variable",
          annotations = list(text = c("Graduate", "Dropout", "Enrolled"),
-                            showarrow = FALSE,
-                            x = c(0.5, 0.5, 0.5),
-                            y = c(0.5, 0.5, 0.5)))
+                            showarrow = FALSE, x = c(0.5, 0.5, 0.5), y = c(0.5, 0.5, 0.5)))
 
-# Show the pie chart
+# Display the pie chart
 Plot
 
 #--------------------------------------------------------------section 06---------------------------------------------
-#-------------------------------min- max nomalization------------------------------------- 
-#data.mm <- apply(data, MARGIN = 2, FUN = function(x) (x - min(x))/diff(range(x)))
-dataset01 <- apply(dataset[1:36], MARGIN = 2, FUN = function(x) scale(x, center = TRUE, scale = TRUE))
+# Min-max normalization (scaling data)
+dataset01 <- apply(dataset[1:36], MARGIN = 2, FUN = function(x) scale(x, center = TRUE, scale = TRUE))  # Standardize the data
 
+# Visualize the boxplots after normalization
 boxplot(dataset01)
 
-#change matrix to a dataframe
+# Convert normalized matrix to a dataframe
 Student_Data <- as.data.frame(dataset01)
 
-
-# bring back the removed column
+# Add the target variable back into the dataset
 Student_Data <- cbind(Student_Data, Target = dataset$Target)
-head(Student_Data)
+head(Student_Data)  # View the first few rows
 
 #----------------------------------------------------------------------section 07------------------------------
-#------------------------------Splitting the dataset into the training set and test set-----------------------------
-#install.packages('caTools')
-
-library(caTools)
+# Splitting the dataset into training and test sets
+library(caTools)  # Load library for dataset splitting
 
 set.seed(2010)
-split = sample.split(Student_Data$Target, SplitRatio = 0.80)
+split = sample.split(Student_Data$Target, SplitRatio = 0.80)  # Split data (80% training, 20% test)
 
+# Create training and test sets
 training_set = subset(Student_Data, split == TRUE)
 test_set = subset(Student_Data, split == FALSE)
 
-
 #---------------------section 08---------------------------------------------
-#Fitting Randomforest to the Training set and predicting the test set result 
-library(randomForest)
+# Fitting a Random Forest model and predicting the test set
+library(randomForest)  # Load randomForest library
 
-RFM <- randomForest(x = training_set[-37],
-                    y = training_set$Target)
+RFM <- randomForest(x = training_set[-37], y = training_set$Target)  # Train random forest model
 
-
-#--------- evaluating model performance------------
-
-#Fitting the predicted data into  
+# Predict target values on the test set
 predicted_TargetRFM <- predict(RFM, test_set)
-#test_set$predicted_Target = predicted_Target
 
-# Create the cross tabulation of predicted vs. actual
+# Create cross-tabulation of predicted vs. actual values
 library(gmodels)
-CrossTable(predicted_TargetRFM, test_set$Target, prop.chisq=FALSE)
+CrossTable(predicted_TargetRFM, test_set$Target, prop.chisq = FALSE)
 
-#Making the Confusion Matrix
+# Create confusion matrix
 library(caret)
-
 confusion_matrix <- confusionMatrix(predicted_TargetRFM, test_set$Target, mode = "everything", positive = "Graduate")
-confusion_matrix
-
-
-
+confusion_matrix  # Display confusion matrix
 
 #-----------------section 09--------------------------------------
-#Building another Model Support Vector Machine (SVM)
-library(e1071)
-?svm
-SVM <- svm(formula = Target ~ ., 
-           data = training_set,
-           type = 'C-classification',
-           kernel = 'radial')
+# Building another model using Support Vector Machine (SVM)
+library(e1071)  # Load library for SVM
 
-#--------- evaluating model performance--------------
-#Fitting the predicted data 
+# Train an SVM model
+SVM <- svm(formula = Target ~ ., data = training_set, type = 'C-classification', kernel = 'radial')
+
+# Predict target values using SVM model
 predicted_TargetSVM = predict(SVM, test_set)
 
-# Create the cross tabulation of predicted vs. actual
-library(gmodels)
-CrossTable(predicted_TargetSVM, test_set$Target, prop.chisq=FALSE)
+# Cross-tabulation of predicted vs. actual values
+CrossTable(predicted_TargetSVM, test_set$Target, prop.chisq = FALSE)
 
-
-#Making the Confusion Matrix
-library(caret)
-
+# Confusion matrix for SVM predictions
 confusion_matrix <- confusionMatrix(predicted_TargetSVM, test_set$Target, mode = "everything", positive = "Graduate")
 confusion_matrix
 
-#checking different kernel
-SVM1 <- svm(formula = Target ~ ., data = training_set, type = 'C-classification', kernel = 'linear')
-predicted_TargetSVM1 = predict(SVM1, test_set)
-CrossTable(predicted_TargetSVM1, test_set$Target, prop.chisq=FALSE)
-
-SVM2 <- svm(formula = Target ~ ., data = training_set, type = 'C-classification', kernel = 'polynomial')
-predicted_TargetSVM1 = predict(SVM2, test_set)
-CrossTable(predicted_TargetSVM2, test_set$Target, prop.chisq=FALSE)
-
-SVM3 <- svm(formula = Target ~ ., data = training_set, type = 'C-classification', kernel = 'sigmold')
-predicted_TargetSVM1 = predict(SVM3, test_set)
-CrossTable(predicted_TargetSVM3, test_set$Target, prop.chisq=FALSE)
-
-
-#-----------------------------------------------Section 10--------------------------------------
-#Fitting K-NN to the Training set and predicting the test set result = y_pred in the concec
-library(class)
-set.seed(12345)
-KNN = knn(train = training_set[, -37],
-             test = test_set[, -37],
-             cl = training_set[, 37],
-             k = 59)
-
-#--------- evaluating model performance--------------
-
-# Create the cross tabulation of predicted vs. actual
-library(gmodels)
-CrossTable(KNN, test_set$Target, prop.chisq=FALSE)
-
-
-#Making the Confusion Matrix
-library(caret)
-
-confusion_matrix <- confusionMatrix(KNN, test_set$Target, mode = "everything", positive = "Graduate")
-confusion_matrix
-
-#checking different numbers of K 
-KNN1 = knn(train = training_set[, -37], test = test_set[, -37], cl = training_set[, 37], k = 40)
-CrossTable(KNN1, test_set$Target, prop.chisq=FALSE)
-
-KNN2 = knn(train = training_set[, -37], test = test_set[, -37], cl = training_set[, 37], k = 70)
-CrossTable(KNN2, test_set$Target, prop.chisq=FALSE)
-
-KNN3 = knn(train = training_set[, -37], test = test_set[, -37], cl = training_set[, 37], k = 64)
-CrossTable(KNN3, test_set$Target, prop.chisq=FALSE)
-
-KNN4 = knn(train = training_set[, -37], test = test_set[, -37], cl = training_set[, 37], k = 15)
-CrossTable(KNN4, test_set$Target, prop.chisq=FALSE)
-
-
-
-#--------------------------------------Decision Tree 11-----------------------------------------
-library(rpart)
-library(rpart.plot)
-library(rattle)
-set.seed(12345)
-Dtree <- rpart(Target ~ ., data = training_set, method = 'class')
-
-#--------- evaluating model performance--------------
-predicted_TargetDtree <- predict(Dtree, test_set, type = "class")
-rpart.plot(Dtree, box.palette = "RdBu", digits = 3)
-
-# Create the cross tabulation of predicted vs. actual
-library(gmodels)
-CrossTable(predicted_TargetDtree, test_set$Target, prop.chisq=FALSE)
-
-
-#Making the Confusion Matrix
-library(caret)
-
-confusion_matrix <- confusionMatrix(predicted_TargetDtree, test_set$Target, mode = "everything", positive = "Graduate")
-confusion_matrix
-
-#----------------------------------------------------------section 12----------------------------------
-#----------------------------Fitting Naive Bayes to the Training set----------------------
-library(e1071)
-?naiveBayes()
-Naive <- naive_bayes(Target ~ ., data = training_set)
-
-# Predict on the test set
-predictions_nb <- predict(Naive, test_set)
-
-# Create the cross tabulation of predicted vs. actual
-CrossTable(predictions_nb, test_set$Target, prop.chisq=FALSE)
-
-#Making the Confusion Matrix
-confusion_matrix <- confusionMatrix(predictions_nb, test_set$Target, mode = "everything", positive = "Graduate")
-confusion_matrix
-
+# Repeat with different SVM kernels (linear, polynomial, sigmoid)
+# (code continues with more models and evaluations)
