@@ -1,136 +1,167 @@
-#--------------------------------------------------------Section 01----------------------------------------
-# Set working directory to the location of the selected file and display current working directory
-setwd(dirname(file.choose()))  # Opens file dialog to select file, sets the directory to file's location
-getwd()  # Prints the working directory
+#-------------------------------------------------------- Section 01 ----------------------------------------
+# Set the working directory to the folder where the file is located
+setwd(dirname(file.choose()))  # Allows the user to choose the file interactively
+getwd()  # Verify the current working directory
 
-#-------------------------------------------------------section 02--------------------------------------
-# Load and explore the dataset
-dataset <- read.csv("Student_data.csv", stringsAsFactors = FALSE)  # Read CSV file
+#------------------------------------------------------- Section 02 --------------------------------------
+# Read in data from the CSV file named "Student_data.csv"
+dataset <- read.csv("Student_data.csv", stringsAsFactors = FALSE)  # Disable automatic conversion to factors
 
-# Inspect dataset structure, first few rows, and summary statistics
-str(dataset)  # Displays the structure of the dataset
-head(dataset)  # Shows the first 6 rows of the dataset
-summary(dataset)  # Displays summary statistics for each column
+# Display structure, first few rows, and summary statistics of the dataset
+str(dataset)  # Structure of the dataset
+head(dataset)  # First 6 rows of the dataset
+summary(dataset)  # Statistical summary of the dataset
 
-#---------------------------------------------------------section 03--------------------------------------
-# Checking for missing data
-library(Amelia)  # Load library for missing data visualization
+#--------------------------------------------------------- Section 03 --------------------------------------
+# Check for missing data and visualize it using a missmap
 
-# Apply function to calculate number of missing values per column
+# Load the required package for missing data visualization
+library(Amelia)
+
+# Apply a function to count missing values in each column
 apply(dataset, MARGIN = 2, FUN = function(x) sum(is.na(x)))
 
-# Visualize missing data in a heatmap
-missmap(dataset, col = c("red", "blue"), legend = TRUE)  # Red for missing, blue for present data
+# Visualize missing data with a heatmap
+missmap(dataset, col = c("red", "blue"), legend = TRUE)  # Red indicates missing, blue is present
 
 # Remove rows with missing data
 dataset <- na.omit(dataset)
 
-# Boxplot to explore the independent variables before normalization
-boxplot(dataset[-37])  # Plot excluding the 37th column (assumed Target)
+# Create a boxplot for numerical variables before normalization
+boxplot(dataset[-37])  # Exclude the 37th column (likely 'Target' or dependent variable)
 
-#-------------------------------------------------------section 04-------------------------------
-# Encoding target variable for correlation testing
-# Convert the 'Target' column to a factor
-dataset$Target <- factor(dataset$Target)
+#------------------------------------------------------- Section 04 ----------------------------------------
+# ENCODING TO INTEGER FOR CORRELATION TESTING
 
-# Convert the target variable to integers for correlation analysis
-dataset$Target <- as.integer(dataset$Target)
+# Convert the 'Target' column (dependent variable) to a factor and then to integer
+dataset$Target <- factor(dataset$Target)  # Convert 'Target' to a factor
+dataset$Target <- as.integer(dataset$Target)  # Convert 'Target' to integer
 
-# Generate a Spearman correlation matrix and visualize it
-library(corrplot)  # Load library for correlation plots
+# Generate the Spearman correlation matrix
+library(corrplot)
+cor_matrix1 <- cor(dataset, method = "spearman")
 
-cor_matrix1 <- cor(dataset, method = "spearman")  # Compute correlation matrix
-corrplot(cor_matrix1, method = "circle", type = "upper", tl.col = "black", tl.srt = 50)  # Visualize correlation matrix
+# Visualize the correlation matrix using a corrplot
+corrplot(cor_matrix1, method = "circle", type = "upper", tl.col = "black", tl.srt = 50)
 
-#-----------------------------------------------------section 05---------------------------------------------
-# Encoding target variable back to factor for better readability
-# Recode 'Target' as a factor with specific levels and labels
-dataset$Target <- factor(dataset$Target, levels = c(1, 2, 3), labels = c("D", "E", "G"))
+#----------------------------------------------------- Section 05 ---------------------------------------------
+# ENCODING BACK TO CHARACTER FOR BETTER VIEW
 
-# Create a frequency table of the target variable
+# Recode the 'Target' variable as a factor with descriptive labels
+dataset$Target <- factor(dataset$Target, levels = c(1, 2, 3),
+                         labels = c("D", "E", "G"))  # Example labels (can be customized)
+
+# Display the frequency table of the 'Target' variable
 table(dataset$Target)
 
-# Show proportion table of the target variable
+# Display the proportions of 'Target' variable categories as percentages
 round(prop.table(table(dataset$Target)) * 100, digits = 1)
 
-# Pie chart for visualizing the distribution of the target variable
-install.packages(plotly)
+# Create a pie chart of the 'Target' variable distribution
+install.packages("plotly")
 library(plotly)
 
 df <- data.frame(
   Target = c("Graduate", "Dropout", "Enrolled"),
-  Count_T = c(49.9, 32.1, 17.9)
+  Count_T = c(49.9, 32.1, 17.9)  # Example values, adjust based on your dataset
 )
 
-# Create a pie chart using plotly
+# Generate a pie chart using Plotly
 Plot <- plot_ly(df, labels = ~Target, values = ~Count_T, type = "pie", textinfo = "value+label",
                 hole = 0.4, pull = c(0, 0.2, 0.1)) %>%
-  layout(title = "Distribution of Target variable",
+  layout(title = "How many dropouts, enrolled & graduates are there in Target column",
          annotations = list(text = c("Graduate", "Dropout", "Enrolled"),
-                            showarrow = FALSE, x = c(0.5, 0.5, 0.5), y = c(0.5, 0.5, 0.5)))
+                            showarrow = FALSE,
+                            x = c(0.5, 0.5, 0.5),
+                            y = c(0.5, 0.5, 0.5)))
 
-# Display the pie chart
+# Show the pie chart
 Plot
 
-#--------------------------------------------------------------section 06---------------------------------------------
-# Min-max normalization (scaling data)
-dataset01 <- apply(dataset[1:36], MARGIN = 2, FUN = function(x) scale(x, center = TRUE, scale = TRUE))  # Standardize the data
+#-------------------------------------------------------------- Section 06 ---------------------------------------------
+# MIN-MAX NORMALIZATION
 
-# Visualize the boxplots after normalization
+# Normalize the data using z-score normalization (center = mean, scale = standard deviation)
+dataset01 <- apply(dataset[1:36], MARGIN = 2, FUN = function(x) scale(x, center = TRUE, scale = TRUE))
+
+# Boxplot for the normalized data
 boxplot(dataset01)
 
-# Convert normalized matrix to a dataframe
+# Convert the matrix back to a data frame and restore the 'Target' column
 Student_Data <- as.data.frame(dataset01)
-
-# Add the target variable back into the dataset
 Student_Data <- cbind(Student_Data, Target = dataset$Target)
-head(Student_Data)  # View the first few rows
+head(Student_Data)
 
-#----------------------------------------------------------------------section 07------------------------------
-# Splitting the dataset into training and test sets
-library(caTools)  # Load library for dataset splitting
+#---------------------------------------------------------------------- Section 07 ------------------------------
+# SPLITTING THE DATASET INTO TRAINING AND TEST SETS
 
+# Load the required library for splitting the dataset
+library(caTools)
 set.seed(2010)
-split = sample.split(Student_Data$Target, SplitRatio = 0.80)  # Split data (80% training, 20% test)
 
-# Create training and test sets
+# Split the data into 80% training and 20% test sets
+split = sample.split(Student_Data$Target, SplitRatio = 0.80)
 training_set = subset(Student_Data, split == TRUE)
 test_set = subset(Student_Data, split == FALSE)
 
-#---------------------section 08---------------------------------------------
-# Fitting a Random Forest model and predicting the test set
-library(randomForest)  # Load randomForest library
+#--------------------- Section 08 ---------------------------------------------
+# FITTING RANDOM FOREST MODEL
 
-RFM <- randomForest(x = training_set[-37], y = training_set$Target)  # Train random forest model
+# Load the Random Forest package
+library(randomForest)
 
-# Predict target values on the test set
+# Train the Random Forest model
+RFM <- randomForest(x = training_set[-37],  # Exclude 'Target' column from predictors
+                    y = training_set$Target)
+
+# Evaluate model performance using the test set
 predicted_TargetRFM <- predict(RFM, test_set)
 
-# Create cross-tabulation of predicted vs. actual values
+# Cross-tabulation of predicted vs actual values
 library(gmodels)
 CrossTable(predicted_TargetRFM, test_set$Target, prop.chisq = FALSE)
 
-# Create confusion matrix
+# Create the confusion matrix
 library(caret)
 confusion_matrix <- confusionMatrix(predicted_TargetRFM, test_set$Target, mode = "everything", positive = "Graduate")
-confusion_matrix  # Display confusion matrix
+confusion_matrix
 
-#-----------------section 09--------------------------------------
-# Building another model using Support Vector Machine (SVM)
-library(e1071)  # Load library for SVM
+#----------------- Section 09 --------------------------------------
+# FITTING SUPPORT VECTOR MACHINE (SVM)
 
-# Train an SVM model
+# Load the SVM package
+library(e1071)
+
+# Train an SVM with radial kernel
 SVM <- svm(formula = Target ~ ., data = training_set, type = 'C-classification', kernel = 'radial')
 
-# Predict target values using SVM model
+# Predict on the test set and evaluate performance
 predicted_TargetSVM = predict(SVM, test_set)
 
-# Cross-tabulation of predicted vs. actual values
+# Cross-tabulation of predicted vs actual values
 CrossTable(predicted_TargetSVM, test_set$Target, prop.chisq = FALSE)
 
-# Confusion matrix for SVM predictions
+# Create the confusion matrix
 confusion_matrix <- confusionMatrix(predicted_TargetSVM, test_set$Target, mode = "everything", positive = "Graduate")
 confusion_matrix
 
-# Repeat with different SVM kernels (linear, polynomial, sigmoid)
-# (code continues with more models and evaluations)
+# Repeat the process with different SVM kernels (linear, polynomial, sigmoid)
+
+#---------------------------------------------------------- Section 12 ----------------------------------
+# FITTING NAIVE BAYES MODEL
+
+# Load the Naive Bayes package
+library(e1071)
+
+# Train a Naive Bayes model
+Naive <- naive_bayes(Target ~ ., data = training_set)
+
+# Predict on the test set and evaluate performance
+predictions_nb <- predict(Naive, test_set)
+
+# Cross-tabulation of predicted vs actual values
+CrossTable(predictions_nb, test_set$Target, prop.chisq = FALSE)
+
+# Create the confusion matrix
+confusion_matrix <- confusionMatrix(predictions_nb, test_set$Target, mode = "everything", positive = "Graduate")
+confusion_matrix
