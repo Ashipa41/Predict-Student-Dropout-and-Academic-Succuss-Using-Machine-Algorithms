@@ -190,4 +190,6 @@ predictions_nb <- predict(Naive, test_set)
 # Evaluate Naive Bayes performance
 CrossTable(predictions_nb, test_set$Target, prop.chisq = FALSE)  # Cross-tabulation
 
-confusion_matrix <- confusionMatrix(pred
+# Making the Confusion Matrix
+confusion_matrix <- confusionMatrix(predictions_nb, test_set$Target, mode = "everything", positive = "Graduate")
+confusion_matrix
