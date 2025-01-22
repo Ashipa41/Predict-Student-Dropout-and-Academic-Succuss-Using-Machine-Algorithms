@@ -1,5 +1,5 @@
 # Predict-Student-Dropout-and-Academic-Succuss-Using-Machine-Algorithms
-This project uses several machine learning algorithms for predicting student dropout and academic success. The process involves data collection, literature review, methodology, and implementing machine learning models in R (programming language)
+This project uses several machine learning algorithms for predicting student dropout and academic success. The process involves data collection, literature review, methodology, and implementing machine learning models in R (programming language).
 
 # Abstract
 Higher education establishments gather a great deal of data about their students, which offers a great deal of opportunity to produce understanding, information, insight, and monitoring. both academic achievement and school dropout rates. Dropouts in higher education have a direct influence on the lives of students and their families, higher education institutions, and society at large. They also impede economic growth, competitiveness, employment, and productivity. Academic information on enrollment and performance at the conclusion of the first and second semesters is included in the dataset that is being described. Machine learning models Random Forest, Decision Tree, SVM, KNN, and Nave Bayes.
